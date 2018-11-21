@@ -9,7 +9,7 @@ These will contain the new model parameters and models. \par
 \begin{figure}[h!]
 \fbox{%
 \begin{minipage}{\textwidth}\centering
-% \includegraphics[width=0.5\textwidth,angle=0]{\ResourcePath figures/tikz/morpho_gm-eps-converted-to} % 
+ \includegraphics[width=0.5\textwidth,angle=90]{\ResourcePath figures/tikz/morpho_gm} % 
 \caption{\small Graphical model demonstrating the discretized Beta distribution for allowing variable state frequencies.}
 \end{minipage}}
 \label{fig:module-gm}
@@ -128,7 +128,7 @@ This estimation will take longer than the Mk model, due to increased model compl
 \begin{figure}[h!]
 \fbox{%
 \begin{minipage}{\textwidth}\centering
-\includegraphics[width=0.5\textwidth,angle=0]{\ResourcePath figures/catplate}
+\includegraphics[width=0.5\textwidth,angle=0]{\ResourcePath figures/tikz/catlike}
 \caption{\small Graphical model demonstrating the Dirichlet prior to allow variable state frequencies in both binary and multistate data.}
 \end{minipage}}
 \label{fig:module-relaxed morphology}
@@ -156,33 +156,45 @@ These will contain the new model parameters and models. \par
 
 \subsection{Modifying the MCMC File}
 
-At each place in which the output files are specified in the MCMC file, change the output path so you don't overwrite the output from the previous exercise. 
+At each place in which the output files are specified in the MCMC file, change the output path so you don't overwrite the output from the previous exercise.
 For example, you might call your output file \cl{output/mk\_hyperprior.log} and \cl{output/mk\_hyperprior.trees}.
 We will also monitor Q\_morpho and pi.
 Add Q\_morpho and pi to the \cl{mnScreen}. 
+Now, change the data file.
+We will use the bears\_multistate.nex file. 
+This data file contains multistate characters, to take advantage of the full power of this model. 
 Change source statement to indicate the new model file.
 
 \subsection{Modifying the Model File}
 Open the new model file that you created. We need to modify the way in which the Q-matrix is specified.
-First, we will create a hyperprior called \cl{dir\_alpha} and specify a move on it.
+First, we will create three hyperparameters called \cl{dir\_alpha}, \cl{dir\_beta}, and \cl{dir\_gamma} and specify moves on them.
+We specify a three-dimensional Dirichlet process because our data have three possible states (0, 1, and 2).
 {\tt \begin{snugshade*}
 \begin{lstlisting}
 dir_alpha ~ dnExponential(1)
 moves[mvi++] = mvScale(dir_alpha, lambda=1,    weight=1.0 )
 moves[mvi++] = mvScale(dir_alpha, lambda=0.1,  weight=3.0 )
 moves[mvi++] = mvScale(dir_alpha, lambda=0.01, weight=5.0 )
+dir_beta ~ dnExponential(1)
+moves[mvi++] = mvScale(dir_beta, lambda=1,    weight=1.0 )
+moves[mvi++] = mvScale(dir_beta, lambda=0.1,  weight=3.0 )
+moves[mvi++] = mvScale(dir_beta, lambda=0.01, weight=5.0 )
+dir_gamma ~ dnExponential(1)
+moves[mvi++] = mvScale(dir_gamma, lambda=1,    weight=1.0 )
+moves[mvi++] = mvScale(dir_gamma, lambda=0.1,  weight=3.0 )
+moves[mvi++] = mvScale(dir_gamma, lambda=0.01, weight=5.0 )
 \end{lstlisting}
 \end{snugshade*}}
 
-This hyperparameter, dir\_alpha, will be used as a parameter to a Dirichelet distribution from which our state frequencies will be drawn.
+This hyperparameters, dir\_alpha, dir\_beta, and dir\_gamma, will be used as a parameter to a Dirichelet distribution from which our state frequencies will be drawn.
 
 {\tt \begin{snugshade*}
 \begin{lstlisting}
-pi_prior := v(dir_alpha,dir_alpha)
+pi_prior := v(dir_alpha,dir_beta, dir_gamma)
 \end{lstlisting}
 \end{snugshade*}}
 
-If you were using multistate data, the dir\_alpha can be repeated for each state.
+Because our data are .
 Next, we will modify our previous loop to use these state frequencies to initialize our Q-matrices.
 
 {\tt \begin{snugshade*}
